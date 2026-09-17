@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portafoglio — registro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #12181C;
+    --ink-2: #1A2229;
+    --paper: #ECE7DD;
+    --paper-dim: #A9A79D;
+    --gold: #C9A227;
+    --gain: #4C9A6A;
+    --loss: #C0483B;
+    --line: #2B3540;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px 64px;
+  }
+  header {
+    padding: 36px 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  header .titolo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--paper-dim);
+  }
+  header .stato {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+  }
+
+  .valore-attuale {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 64px;
+    line-height: 1;
+    margin: 14px 0 2px;
+    letter-spacing: -0.01em;
+  }
+  .variazione {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    margin-bottom: 22px;
+  }
+  .variazione.su { color: var(--gain); }
+  .variazione.giu { color: var(--loss); }
+
+  svg.sparkline { width: 100%; height: 72px; display: block; margin-bottom: 8px; }
+
+  .riepilogo-riga {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--paper-dim);
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    margin-bottom: 24px;
+  }
+
+  #btn-avvia {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 8px;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  #btn-avvia:disabled { opacity: 0.55; cursor: default; }
+
+  #stato-avvio {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    min-height: 18px;
+    margin-bottom: 36px;
+    color: var(--paper-dim);
+  }
+  #stato-avvio.ok { color: var(--gain); }
+  #stato-avvio.errore { color: var(--loss); }
+
+  h2.sezione {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    margin: 0 0 18px;
+  }
+
+  .voce {
+    border-top: 1px solid var(--line);
+    padding: 18px 0;
+  }
+  .voce:last-child { border-bottom: 1px solid var(--line); }
+
+  .voce-riga1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--paper-dim);
+    margin-bottom: 6px;
+  }
+  .voce-riga1 .data { }
+  .voce-riga1 .ticker { color: var(--paper); }
+
+  .voce-riga2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .azione-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .azione-tag.compra { background: rgba(76,154,106,0.16); color: var(--gain); }
+  .azione-tag.vendi { background: rgba(192,72,59,0.16); color: var(--loss); }
+
+  .voce-prezzo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+  }
+
+  .voce-quantita {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--paper-dim);
+    margin-top: 2px;
+  }
+
+  .voce-motivazione {
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--paper);
+    opacity: 0.88;
+    border-left: 2px solid var(--gold);
+    padding-left: 12px;
+    margin-top: 10px;
+  }
+
+  .vuoto {
+    color: var(--paper-dim);
+    font-size: 14px;
+    padding: 24px 0;
+  }
+
+  footer {
+    margin-top: 44px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    line-height: 1.6;
+  }
+
+  #caricamento, #errore {
+    padding: 80px 0;
+    text-align: center;
+    color: var(--paper-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  #errore { color: var(--loss); display: none; }
+</style>
+</head>
+<body>
+
+<div id="caricamento">caricamento del registro…</div>
+<div id="errore"></div>
+
+<div id="contenuto" style="display:none">
+  <header>
+    <span class="titolo">registro / portafoglio virtuale</span>
+    <span class="stato" id="stato-giorni"></span>
+  </header>
+
+  <div class="valore-attuale" id="valore-attuale">—</div>
+  <div class="variazione" id="variazione-testo">—</div>
+
+  <svg class="sparkline" id="sparkline" viewBox="0 0 500 72" preserveAspectRatio="none"></svg>
+
+  <div class="riepilogo-riga">
+    <span id="capitale-iniziale-label"></span>
+    <span id="giorni-attivi-label"></span>
+  </div>
+
+  <button id="btn-avvia">Avvia il bot ora</button>
+  <div id="stato-avvio"></div>
+
+  <h2 class="sezione">Operazioni</h2>
+  <div id="lista-operazioni"></div>
+
+  <footer>
+    Soldi finti, prezzi reali. Nessuna operazione reale è mai stata eseguita.<br>
+    Aggiornato automaticamente ad ogni esecuzione del bot.
+  </footer>
+</div>
+
+<script>
+async function carica() {
+  try {
+    const risposta = await fetch('./portafoglio_virtuale.json', { cache: 'no-store' });
+    if (!risposta.ok) throw new Error('File non trovato (' + risposta.status + ')');
+    const dati = await risposta.json();
+    disegna(dati);
+    document.getElementById('caricamento').style.display = 'none';
+    document.getElementById('contenuto').style.display = 'block';
+  } catch (err) {
+    document.getElementById('caricamento').style.display = 'none';
+    const el = document.getElementById('errore');
+    el.style.display = 'block';
+    el.textContent = 'Non riesco a leggere il registro: ' + err.message;
+  }
+}
+
+function formattaEuro(v) {
+  return '€' + v.toFixed(2);
+}
+
+function formattaQuantita(q) {
+  if (q >= 1) return q.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+  return q.toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function disegna(dati) {
+  const storico = dati.storico_valore || [];
+  const operazioni = (dati.storico_operazioni || []).slice().reverse();
+  const capitaleIniziale = storico.length ? storico[0].valore : 100;
+  const valoreAttuale = storico.length ? storico[storico.length - 1].valore : capitaleIniziale;
+  const variazionePct = (valoreAttuale / capitaleIniziale - 1) * 100;
+  const su = variazionePct >= 0;
+
+  document.getElementById('valore-attuale').textContent = formattaEuro(valoreAttuale);
+  const varEl = document.getElementById('variazione-testo');
+  varEl.textContent = (su ? '+' : '') + variazionePct.toFixed(2) + '% da inizio';
+  varEl.className = 'variazione ' + (su ? 'su' : 'giu');
+
+  document.getElementById('capitale-iniziale-label').textContent = 'partito da ' + formattaEuro(capitaleIniziale);
+  document.getElementById('giorni-attivi-label').textContent = storico.length + ' giorni registrati';
+  document.getElementById('stato-giorni').textContent = storico.length ? storico[storico.length-1].data : '';
+
+  disegnaSparkline(storico, capitaleIniziale);
+
+  const lista = document.getElementById('lista-operazioni');
+  lista.innerHTML = '';
+  if (!operazioni.length) {
+    lista.innerHTML = '<div class="vuoto">Nessuna operazione ancora registrata.</div>';
+    return;
+  }
+  for (const op of operazioni) {
+    const div = document.createElement('div');
+    div.className = 'voce';
+    const isCompra = op.azione.toUpperCase().includes('COMPRA');
+    const varTxt = (op.variazione_pct !== undefined && op.variazione_pct !== null)
+      ? ' · ' + (op.variazione_pct >= 0 ? '+' : '') + op.variazione_pct.toFixed(2) + '%'
+      : '';
+    const quantitaTxt = (op.quantita !== undefined && op.quantita !== null)
+      ? formattaQuantita(op.quantita) + ' ' + (op.ticker ? op.ticker.split('-')[0] : '')
+      : '';
+    div.innerHTML = `
+      <div class="voce-riga1">
+        <span class="data">${op.data}</span>
+        <span class="ticker">${op.ticker || ''}</span>
+      </div>
+      <div class="voce-riga2">
+        <span class="azione-tag ${isCompra ? 'compra' : 'vendi'}">${isCompra ? 'COMPRA' : 'VENDI'} — ${op.nome}</span>
+        <span class="voce-prezzo">€${Number(op.prezzo).toFixed(2)}${varTxt}</span>
+      </div>
+      ${quantitaTxt ? `<div class="voce-quantita">${quantitaTxt} a questo prezzo</div>` : ''}
+      ${op.motivazione ? `<div class="voce-motivazione">${op.motivazione}</div>` : ''}
+    `;
+    lista.appendChild(div);
+  }
+}
+
+function disegnaSparkline(storico, capitaleIniziale) {
+  const svg = document.getElementById('sparkline');
+  if (storico.length < 2) { svg.innerHTML = ''; return; }
+  const valori = storico.map(p => p.valore);
+  const min = Math.min(...valori, capitaleIniziale);
+  const max = Math.max(...valori, capitaleIniziale);
+  const range = (max - min) || 1;
+  const w = 500, h = 72, pad = 4;
+
+  const punti = valori.map((v, i) => {
+    const x = (i / (valori.length - 1)) * (w - pad*2) + pad;
+    const y = h - pad - ((v - min) / range) * (h - pad*2);
+    return [x, y];
+  });
+
+  const linea = 'M ' + punti.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L ');
+  const areaPath = linea + ` L ${punti[punti.length-1][0]} ${h} L ${punti[0][0]} ${h} Z`;
+
+  const colore = valori[valori.length-1] >= capitaleIniziale ? '#4C9A6A' : '#C0483B';
+
+  svg.innerHTML = `
+    <path d="${areaPath}" fill="${colore}" opacity="0.12"></path>
+    <path d="${linea}" fill="none" stroke="${colore}" stroke-width="2"></path>
+  `;
+}
+
+carica();
+
+const btn = document.getElementById('btn-avvia');
+const statoAvvio = document.getElementById('stato-avvio');
+
+btn.addEventListener('click', async () => {
+  btn.disabled = true;
+  statoAvvio.className = '';
+  statoAvvio.textContent = 'Avvio in corso…';
+
+  try {
+    const risposta = await fetch('/.netlify/functions/run-bot', { method: 'POST' });
+    const risultato = await risposta.json();
+
+    if (risultato.ok) {
+      statoAvvio.className = 'ok';
+      statoAvvio.textContent = 'Avviato — il bot gira ora su GitHub, ci vuole circa 1 minuto. Ricarica la pagina a breve.';
+    } else {
+      statoAvvio.className = 'errore';
+      statoAvvio.textContent = 'Errore: ' + (risultato.errore || 'sconosciuto');
+    }
+  } catch (err) {
+    statoAvvio.className = 'errore';
+    statoAvvio.textContent = 'Errore di connessione: ' + err.message;
+  }
+
+  setTimeout(() => { btn.disabled = false; }, 15000);  // evita doppio click accidentale
+});
+</script>
+</body>
+</html>
